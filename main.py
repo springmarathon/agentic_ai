@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from data.yahoo_finance import get_current_price, get_news, get_article_text
+from data.episode_store import save_episode
 from agents.sentiment_analyst import score_content
 from agents.bull_researcher import bull_argue
 from agents.bear_researcher import bear_argue
@@ -100,6 +101,7 @@ def analyse(ticker):
     history = ""
     last_bull = ""
     last_bear = ""
+    debate_rounds = []
 
     for round_num in range(1, DEBATE_ROUNDS + 1):
         print(f"--- Round {round_num} ---\n")
@@ -112,11 +114,23 @@ def analyse(ticker):
         history += f"\nBear: {last_bear}\n"
         print(f"Bear:\n{last_bear}\n")
 
+        debate_rounds.append({"round": round_num, "bull": last_bull, "bear": last_bear})
+
     print(f"{'='*60}")
     print("Research Manager Verdict")
     print(f"{'='*60}\n")
     verdict = summarize_debate(client, ticker, history)
     print(verdict)
+
+    episode_id = save_episode(
+        ticker=ticker,
+        price=price,
+        sentiment_results=results,
+        sentiment_score=final_score if scores else None,
+        debate_rounds=debate_rounds,
+        verdict=verdict,
+    )
+    print(f"\n[Episode saved: {episode_id}]")
 
 
 if __name__ == "__main__":
